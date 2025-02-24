@@ -1,87 +1,55 @@
-let highestZ = 1;
+const pictures = document.querySelectorAll('.Picture');
+var previousTouch = undefined;
 
-class Paper {
-  holdingPaper = false;
-  mouseTouchX = 0;
-  mouseTouchY = 0;
-  mouseX = 0;
-  mouseY = 0;
-  prevMouseX = 0;
-  prevMouseY = 0;
-  velX = 0;
-  velY = 0;
-  rotation = Math.random() * 30 - 15;
-  currentPaperX = 0;
-  currentPaperY = 0;
-  rotating = false;
+function updateElementPosition(element, event) {
+  var movementX, movementY;
 
-  init(paper) {
-    document.addEventListener('mousemove', (e) => {
-      if(!this.rotating) {
-        this.mouseX = e.clientX;
-        this.mouseY = e.clientY;
-        
-        this.velX = this.mouseX - this.prevMouseX;
-        this.velY = this.mouseY - this.prevMouseY;
-      }
-        
-      const dirX = e.clientX - this.mouseTouchX;
-      const dirY = e.clientY - this.mouseTouchY;
-      const dirLength = Math.sqrt(dirX*dirX+dirY*dirY);
-      const dirNormalizedX = dirX / dirLength;
-      const dirNormalizedY = dirY / dirLength;
-
-      const angle = Math.atan2(dirNormalizedY, dirNormalizedX);
-      let degrees = 180 * angle / Math.PI;
-      degrees = (360 + Math.round(degrees)) % 360;
-      if(this.rotating) {
-        this.rotation = degrees;
-      }
-
-      if(this.holdingPaper) {
-        if(!this.rotating) {
-          this.currentPaperX += this.velX;
-          this.currentPaperY += this.velY;
-        }
-        this.prevMouseX = this.mouseX;
-        this.prevMouseY = this.mouseY;
-
-        paper.style.transform = `translateX(${this.currentPaperX}px) translateY(${this.currentPaperY}px) rotateZ(${this.rotation}deg)`;
-      }
-    })
-
-    paper.addEventListener('mousedown', (e) => {
-      e.preventDefault();
-      if(this.holdingPaper) return; 
-      this.holdingPaper = true;
-      
-      paper.style.zIndex = highestZ;
-      highestZ += 1;
-      
-      if(e.button === 0) {
-        this.mouseTouchX = this.mouseX;
-        this.mouseTouchY = this.mouseY;
-        this.prevMouseX = this.mouseX;
-        this.prevMouseY = this.mouseY;
-      }
-      if(e.button === 2) {
-        this.rotating = true;
-      }
-      paper.addEventListener('contextmenu', (e) => {
-        e.preventDefault();
-      });
-  
-      window.addEventListener('mouseup', () => {
-        this.holdingPaper = false;
-        this.rotating = false;
-      });
-    });
+  if (event.type === 'touchmove') {
+    const touch = event.touches[0];
+    movementX = previousTouch ? touch.clientX - previousTouch.clientX : 0;
+    movementY = previousTouch ? touch.clientY - previousTouch.clientY : 0;
+    console.log('touch', { movementX: movementX, newX: touch.clientX, oldX: previousTouch && previousTouch.clientX });
+    previousTouch = touch;
+  } else {
+    movementX = event.movementX;
+    movementY = event.movementY;
   }
+  
+  const elementY = parseInt(element.style.top || 0) + movementY;
+  const elementX = parseInt(element.style.left|| 0) + movementX;
+
+  element.style.top = elementY + "px";
+  element.style.left = elementX + "px";
 }
 
-const papers = Array.from(document.querySelectorAll('.paper'));
+function startDrag(element, event) {
 
-papers.forEach(paper => {
-  const p = new Paper();
-  p.init(paper);
+  const updateFunction = (event) => updateElementPosition(element, event);
+  const stopFunction = () => stopDrag({update: updateFunction, stop: stopFunction});
+  document.addEventListener("mousemove", updateFunction);
+  document.addEventListener("touchmove", updateFunction);
+  document.addEventListener("mouseup", stopFunction);
+  document.addEventListener("touchend", stopFunction);
+  
+}
+
+function stopDrag(functions) {
+  previousTouch = undefined;
+  document.removeEventListener("mousemove", functions.update);
+  document.removeEventListener("touchmove", functions.update);
+  document.removeEventListener("mouseup", functions.stop);
+  document.removeEventListener("touchend", functions.stop);
+}
+
+pictures.forEach(picture => {
+  const range = 100;
+  const randomX = Math.random() * (range * 2) - range;
+  const randomY = Math.random() * (range * 2) - range;
+  const randomRotate = Math.random() * (range / 2) - range / 4;
+  const startFunction = (event) => startDrag(picture, event);
+  picture.style.top = `${randomY}px`;
+  picture.style.left = `${randomX}px`;
+  picture.style.transform = `translate(-50%, -50%) rotate(${randomRotate}deg)`;
+  picture.addEventListener("mousedown", startFunction);
+  picture.addEventListener("touchstart", startFunction);
 });
