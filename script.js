@@ -51,6 +51,7 @@ class Paper {
     })
 
     paper.addEventListener('mousedown', (e) => {
+      e.preventDefault();
       if(this.holdingPaper) return; 
       this.holdingPaper = true;
       
@@ -66,10 +67,14 @@ class Paper {
       if(e.button === 2) {
         this.rotating = true;
       }
-    });
-    window.addEventListener('mouseup', () => {
-      this.holdingPaper = false;
-      this.rotating = false;
+      paper.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+      });
+  
+      window.addEventListener('mouseup', () => {
+        this.holdingPaper = false;
+        this.rotating = false;
+      });
     });
   }
 }
